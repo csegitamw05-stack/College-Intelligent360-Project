@@ -10,7 +10,7 @@ services:
     healthCheckPath: /api/v1/health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: "3.11.9"
       - key: ENVIRONMENT
         value: production
       - key: DEBUG
@@ -34,13 +34,9 @@ services:
     startCommand: npm run start
     envVars:
       - key: NODE_VERSION
-        value: 18.18.0
+        value: "18.18.0"
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: campus-intel-backend
-          property: host
-          transform: "https://{value}/api/v1"
+        value: https://campus-intel-backend.onrender.com/api/v1
 
 # 3. PostgreSQL Database
 databases:
