@@ -7,14 +7,17 @@ cd /d "%~dp0"
 
 echo.
 echo [1] Adding all changed files...
+git add -f frontend/lib/
 git add -A
 
 echo.
 echo [2] Committing...
-git commit -m "feat: Connect Neon PostgreSQL database and configure Render production settings
+git commit -m "fix: Track frontend/lib (axios, queryClient, utils) and fix tsconfig paths
 
+- .gitignore: Unignore frontend/lib so axios.ts is tracked by git
+- frontend/tsconfig.json: Add baseUrl and clean include paths
 - backend/.env and render.yaml: Configured Neon PostgreSQL connection
-- config.py: Neon URL sanitization (channel_binding and postgresql schema normalization)
+- config.py: Neon URL sanitization (channel_binding and postgresql normalization)
 - main.py: HEAD health check support and favicon handler
 - modules.py: Lab model import fix
 - seed_demo.py: Section and Subject schema alignment with database"
