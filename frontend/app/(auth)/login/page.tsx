@@ -36,7 +36,10 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       setError(null);
-      await login(data);
+      await login({
+        email: data.email as string,
+        password: data.password as string,
+      });
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || 'Invalid credentials. Please try again.');
       setIsLoading(false);
