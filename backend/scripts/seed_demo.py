@@ -37,10 +37,8 @@ def run_seed():
         # Check if already seeded
         existing_users = db.query(User).count()
         if existing_users > 0:
-            print(f"Database already contains {existing_users} users. Clearing existing data...")
-            for table in reversed(Base.metadata.sorted_tables):
-                db.execute(table.delete())
-            db.commit()
+            print(f"Database already contains {existing_users} users. Skipping seeding.")
+            return
 
         print("Seeding Users...")
         hashed_password = hash_password("Password123!")

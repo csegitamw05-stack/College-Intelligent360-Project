@@ -57,6 +57,39 @@ def create_application() -> FastAPI:
         from fastapi import Response
         return Response(status_code=204)
 
+    @app.get(f"{settings.API_V1_STR}/seed-database", tags=["System & Health"])
+    def seed_database_endpoint():
+        """
+        Public endpoint to initialize and seed all institutional demo data.
+        Returns status, error diagnostics, and user count.
+        """
+        try:
+            from app.core.database import SessionLocal, engine, Base
+            from app.models.user import User
+            from scripts.seed_demo import run_seed
+
+            Base.metadata.create_all(bind=engine)
+            run_seed()
+
+            db = SessionLocal()
+            users_count = db.query(User).count()
+            users = [f"{u.email} ({u.role.value if hasattr(u.role, 'value') else u.role})" for u in db.query(User).all()]
+            db.close()
+
+            return {
+                "status": "success",
+                "message": "Database tables created and seeded successfully!",
+                "users_count": users_count,
+                "users": users
+            }
+        except Exception as e:
+            import traceback
+            return {
+                "status": "error",
+                "message": str(e),
+                "traceback": traceback.format_exc()
+            }
+
     # Auto-seed database on startup if empty
     @app.on_event("startup")
     def startup_db_seed():

@@ -12,12 +12,10 @@ git add -A
 
 echo.
 echo [2] Committing...
-git commit -m "fix(frontend): Resolve Header/PageContainer exports, login type error, and ignoreBuildErrors
+git commit -m "feat(backend): Add /api/v1/seed-database endpoint and safe seeding logic
 
-- Header.tsx and PageContainer.tsx: Added default exports
-- PageContainer.tsx: Made title optional for dashboard layout
-- login/page.tsx: Fixed LoginCredentials type compatibility
-- next.config.js: Added ignoreBuildErrors and ignoreDuringBuilds"
+- main.py: Add public /api/v1/seed-database endpoint for on-demand table initialization
+- seed_demo.py: Safe skipping when users exist, prevent foreign key issues"
 
 echo.
 echo [3] Pushing to main...
