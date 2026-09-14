@@ -41,7 +41,7 @@ def create_application() -> FastAPI:
     # Register versioned API
     app.include_router(api_router, prefix=settings.API_V1_STR)
 
-    @app.get("/", include_in_schema=False)
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     def root():
         return {
             "title": settings.PROJECT_NAME,
@@ -51,6 +51,11 @@ def create_application() -> FastAPI:
             "docs": "/docs",
             "health": f"{settings.API_V1_STR}/health",
         }
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        from fastapi import Response
+        return Response(status_code=204)
 
     # Auto-seed database on startup if empty
     @app.on_event("startup")

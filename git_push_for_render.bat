@@ -11,14 +11,13 @@ git add -A
 
 echo.
 echo [2] Committing...
-git commit -m "fix: Render deployment - import fixes in modules.py, seed_demo.py, postgresql URL normalization
+git commit -m "feat: Connect Neon PostgreSQL database and configure Render production settings
 
-- modules.py: Import Lab from academics instead of org
-- seed_demo.py: Remove non-existent Program and Batch models, fix Section and Subject fields
-- config.py: Normalize postgres:// to postgresql:// for SQLAlchemy Render database URL
-- Add backend/scripts/__init__.py so 'from scripts.seed_demo import run_seed' works
-- Replace python-magic with platform-conditional dependencies
-- render.yaml: remove unsupported transform key, hardcode backend API URL, pin Python 3.11.9"
+- backend/.env and render.yaml: Configured Neon PostgreSQL connection
+- config.py: Neon URL sanitization (channel_binding and postgresql schema normalization)
+- main.py: HEAD health check support and favicon handler
+- modules.py: Lab model import fix
+- seed_demo.py: Section and Subject schema alignment with database"
 
 echo.
 echo [3] Pushing to main...

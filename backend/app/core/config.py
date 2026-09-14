@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # CORS Configuration
-    CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: Union[List[str], str] = ["*"]
 
     # JWT / Security Configuration
     SECRET_KEY: str = "campus_intel_360_secret_key_default_change_in_production"
@@ -59,18 +59,25 @@ class Settings(BaseSettings):
             return [i.strip() for i in v.split(",") if i.strip()]
         elif isinstance(v, list):
             return v
-        return ["http://localhost:3000"]
+        return ["*"]
 
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
             url = self.DATABASE_URL
             if url.startswith("postgres://"):
                 url = url.replace("postgres://", "postgresql://", 1)
+            # Remove channel_binding parameter as some libpq versions on Linux don't support it
+            if "channel_binding=" in url:
+                url = url.replace("&channel_binding=require", "").replace("channel_binding=require&", "").replace("channel_binding=require", "")
+                if url.endswith("?"):
+                    url = url[:-1]
             return url
-        return (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
+        if self.POSTGRES_SERVER and self.POSTGRES_SERVER != "localhost":
+            return (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+        return "sqlite:///./campus_intel.db"
 
 
 settings = Settings()
