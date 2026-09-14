@@ -11,14 +11,14 @@ git add -A
 
 echo.
 echo [2] Committing...
-git commit -m "fix: Render deployment - python-magic-bin, scripts __init__.py, render.yaml cleanup
+git commit -m "fix: Render deployment - import fixes in modules.py, seed_demo.py, postgresql URL normalization
 
-- Replace python-magic with platform-conditional deps (python-magic-bin on Windows,
-  python-magic on Linux/Render) to avoid libmagic binary dependency issue
+- modules.py: Import Lab from academics instead of org
+- seed_demo.py: Remove non-existent Program and Batch models, fix Section and Subject fields
+- config.py: Normalize postgres:// to postgresql:// for SQLAlchemy Render database URL
 - Add backend/scripts/__init__.py so 'from scripts.seed_demo import run_seed' works
-- Fix render.yaml: remove unsupported 'transform' key, pin Python 3.11.9,
-  hardcode backend URL for frontend NEXT_PUBLIC_API_URL
-- Restore database.py to original (engine creation at runtime is fine on Render)"
+- Replace python-magic with platform-conditional dependencies
+- render.yaml: remove unsupported transform key, hardcode backend API URL, pin Python 3.11.9"
 
 echo.
 echo [3] Pushing to main...

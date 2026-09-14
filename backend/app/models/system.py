@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Text, Boolean, JSON, Integer, ForeignKey
+from sqlalchemy.orm import synonym
 from app.core.database import Base
 from app.models.base import BaseModelMixin, SoftDeleteMixin
 
@@ -34,7 +35,8 @@ class UploadedFile(Base, BaseModelMixin, SoftDeleteMixin):
     uploaded_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     status = Column(String(50), default="Pending") # Pending, Processing, Completed, Failed
     import_summary = Column(JSON, nullable=True)
-    
+    uploaded_at = synonym("created_at")
+
 
 class Notification(Base, BaseModelMixin, SoftDeleteMixin):
     __tablename__ = "notifications"

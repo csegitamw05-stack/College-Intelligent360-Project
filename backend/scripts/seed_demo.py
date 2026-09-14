@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.core.database import engine, SessionLocal, Base
 from app.security.password import hash_password
 from app.models.user import User, UserRole
-from app.models.org import Department, Program, Batch, Section, Course, Subject
+from app.models.org import Department, Section, Subject
 from app.models.people import Student, Faculty
 from app.models.academics import Attendance, AcademicPerformance, Assessment, Assignment, Lab, LabPerformance
 from app.models.activities import StudentEngagement, FacultyActivity, Event, Placement, Research
@@ -134,22 +134,11 @@ def run_seed():
         db.add_all([incharge_cse, incharge_ece])
         db.commit()
 
-        # 5. Programs, Batches & Sections
-        programs = {}
-        for code, dept in dept_objs.items():
-            prog = Program(name=f"B.Tech in {dept.name}", code=f"BTECH-{code}", department_id=dept.id)
-            db.add(prog)
-            db.flush()
-            programs[code] = prog
-
-        batch_2026 = Batch(name="2022-2026", start_year=2022, end_year=2026)
-        db.add(batch_2026)
-        db.flush()
-
+        # 5. Sections
         sections = {}
-        for code, prog in programs.items():
-            sec_a = Section(name=f"{code}-A", program_id=prog.id, batch_id=batch_2026.id)
-            sec_b = Section(name=f"{code}-B", program_id=prog.id, batch_id=batch_2026.id)
+        for code, dept in dept_objs.items():
+            sec_a = Section(name=f"{code}-A", department_id=dept.id, year=4, semester=8)
+            sec_b = Section(name=f"{code}-B", department_id=dept.id, year=4, semester=8)
             db.add_all([sec_a, sec_b])
             db.flush()
             sections[code] = [sec_a, sec_b]
@@ -173,17 +162,17 @@ def run_seed():
         # 7. Courses & Subjects
         subjects = []
         subjects_data = [
-            ("CSE-301", "Data Structures & Algorithms", 4, dept_objs["CSE"].id),
-            ("CSE-402", "Machine Learning & AI Systems", 4, dept_objs["CSE"].id),
-            ("ECE-201", "Embedded Microcontrollers", 3, dept_objs["ECE"].id),
-            ("ECE-305", "Digital Signal Processing", 4, dept_objs["ECE"].id),
-            ("ME-102", "Advanced Thermodynamics", 3, dept_objs["ME"].id),
-            ("ME-304", "Robotics & Automation", 4, dept_objs["ME"].id),
-            ("IT-303", "Cloud Computing Architectures", 4, dept_objs["IT"].id),
-            ("IT-401", "Web Application Development", 3, dept_objs["IT"].id),
+            ("CSE-301", "Data Structures & Algorithms", 4, dept_objs["CSE"].id, 5),
+            ("CSE-402", "Machine Learning & AI Systems", 4, dept_objs["CSE"].id, 7),
+            ("ECE-201", "Embedded Microcontrollers", 3, dept_objs["ECE"].id, 3),
+            ("ECE-305", "Digital Signal Processing", 4, dept_objs["ECE"].id, 5),
+            ("ME-102", "Advanced Thermodynamics", 3, dept_objs["ME"].id, 2),
+            ("ME-304", "Robotics & Automation", 4, dept_objs["ME"].id, 6),
+            ("IT-303", "Cloud Computing Architectures", 4, dept_objs["IT"].id, 5),
+            ("IT-401", "Web Application Development", 3, dept_objs["IT"].id, 7),
         ]
-        for code, name, credits, dept_id in subjects_data:
-            subj = Subject(code=code, name=name, credits=credits, department_id=dept_id)
+        for code, name, credits, dept_id, sem in subjects_data:
+            subj = Subject(code=code, name=name, credits=credits, department_id=dept_id, semester=sem)
             db.add(subj)
             db.flush()
             subjects.append(subj)

@@ -10,10 +10,10 @@ from sqlalchemy import func
 from datetime import date
 
 from app.core.database import get_db
-from app.models.academics import Attendance, AcademicPerformance, Assessment, LabPerformance
+from app.models.org import Subject, Department
+from app.models.academics import Attendance, AcademicPerformance, Assessment, LabPerformance, Lab
 from app.models.activities import StudentEngagement, FacultyActivity, Event, Placement, Research
 from app.models.people import Student, Faculty
-from app.models.org import Subject, Lab, Department
 
 router = APIRouter(prefix="/modules", tags=["9 Domain Data Modules"])
 
