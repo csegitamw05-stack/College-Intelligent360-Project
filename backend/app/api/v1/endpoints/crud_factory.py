@@ -4,7 +4,7 @@ from typing import Type, List, Any, Optional
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.repositories.base import BaseRepository
-from app.security.dependencies import require_role
+from app.security.dependencies import require_roles
 from app.models.user import UserRole
 from app.schemas.generic import PaginationSchema
 
@@ -25,7 +25,7 @@ def get_crud_router(
         skip: int = 0,
         limit: int = 100,
         db: Session = Depends(get_db),
-        current_user = Depends(require_role([UserRole.PRINCIPAL, UserRole.HOD, UserRole.INCHARGE]))
+        current_user = Depends(require_roles(UserRole.PRINCIPAL, UserRole.HOD, UserRole.INCHARGE, UserRole.SYSTEM_ADMIN))
     ):
         """
         Retrieve all active (non-soft-deleted) records.
@@ -48,7 +48,7 @@ def get_crud_router(
     def read_one(
         id: int,
         db: Session = Depends(get_db),
-        current_user = Depends(require_role([UserRole.PRINCIPAL, UserRole.HOD, UserRole.INCHARGE]))
+        current_user = Depends(require_roles(UserRole.PRINCIPAL, UserRole.HOD, UserRole.INCHARGE, UserRole.SYSTEM_ADMIN))
     ):
         obj = repository.get_by_id(db, id)
         if not obj:
@@ -65,7 +65,7 @@ def get_crud_router(
     def create(
         item_in: create_schema,
         db: Session = Depends(get_db),
-        current_user = Depends(require_role([UserRole.PRINCIPAL, UserRole.HOD]))
+        current_user = Depends(require_roles(UserRole.PRINCIPAL, UserRole.HOD, UserRole.SYSTEM_ADMIN))
     ):
         return repository.create(db, item_in.model_dump())
 
@@ -74,7 +74,7 @@ def get_crud_router(
         id: int,
         item_in: update_schema,
         db: Session = Depends(get_db),
-        current_user = Depends(require_role([UserRole.PRINCIPAL, UserRole.HOD]))
+        current_user = Depends(require_roles(UserRole.PRINCIPAL, UserRole.HOD, UserRole.SYSTEM_ADMIN))
     ):
         obj = repository.get_by_id(db, id)
         if not obj:
@@ -91,7 +91,7 @@ def get_crud_router(
         id: int,
         reason: Optional[str] = None,
         db: Session = Depends(get_db),
-        current_user = Depends(require_role([UserRole.PRINCIPAL]))
+        current_user = Depends(require_roles(UserRole.PRINCIPAL, UserRole.SYSTEM_ADMIN))
     ):
         """
         Soft deletes the record. Only PRINCIPAL has generic delete authority.

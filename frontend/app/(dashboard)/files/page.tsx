@@ -42,7 +42,7 @@ export default function FilesManagementPage() {
   // Mapping & Validation State
   const [selectedFileForMapping, setSelectedFileForMapping] = useState<any | null>(null);
   const [targetEntity, setTargetEntity] = useState<string>('students');
-  const [columnMapping, setColumnMapping] = useState<Record<string, str>>({});
+  const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [validationResult, setValidationResult] = useState<any | null>(null);
   const [importing, setImporting] = useState(false);
 

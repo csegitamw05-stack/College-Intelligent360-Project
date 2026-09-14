@@ -12,7 +12,7 @@ Generates 8 Report Types:
 Supports CSV, Excel (XLSX), and PDF exports.
 """
 import io
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import pandas as pd
 from sqlalchemy.orm import Session

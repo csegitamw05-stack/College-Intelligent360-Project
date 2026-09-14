@@ -12,6 +12,7 @@ from app.models.user import User, UserRole
 from app.schemas.auth import UserProfile
 from app.analytics.intelligence_engine import IntelligenceEngine
 from app.models.people import Student, Faculty
+from app.models.org import Department
 from app.models.intelligence import RiskScore
 from app.models.academics import Attendance
 
@@ -75,15 +76,24 @@ def hod_dashboard(
     dept_code = current_user.department or "CSE"
     digital_twin = IntelligenceEngine.get_digital_twin_overview(db, department_code=dept_code)
     
+    dept_obj = db.query(Department).filter(Department.code == dept_code).first()
+    dept_id = dept_obj.id if dept_obj else None
+
     # Department faculty
-    faculties = db.query(Faculty).filter(Faculty.department_id == Faculty.department_id, Faculty.is_deleted == False).limit(10).all()
+    fac_query = db.query(Faculty).filter(Faculty.is_deleted == False)
+    if dept_id:
+        fac_query = fac_query.filter(Faculty.department_id == dept_id)
+    faculties = fac_query.limit(10).all()
     fac_list = [{"id": f.id, "name": f.name, "designation": f.designation} for f in faculties]
 
     # Department at-risk students
-    at_risk = db.query(RiskScore, Student).join(Student, RiskScore.student_id == Student.id).filter(
+    risk_query = db.query(RiskScore, Student).join(Student, RiskScore.student_id == Student.id).filter(
         RiskScore.risk_level.in_(["High", "Medium"]),
         Student.is_deleted == False
-    ).all()
+    )
+    if dept_id:
+        risk_query = risk_query.filter(Student.department_id == dept_id)
+    at_risk = risk_query.all()
     
     risk_list = []
     for rs, st in at_risk:

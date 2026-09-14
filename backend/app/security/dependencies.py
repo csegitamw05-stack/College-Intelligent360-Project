@@ -2,7 +2,7 @@
 FastAPI dependency functions for authentication and role-based authorization.
 These dependencies are used in endpoint signatures — enforced server-side.
 """
-from typing import Callable
+from typing import Callable, Any
 from fastapi import Depends, HTTPException, status, Cookie
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -57,17 +57,25 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
-def require_roles(*roles: UserRole) -> Callable:
+def require_roles(*roles: Any) -> Callable:
     """
     Factory that returns a FastAPI dependency enforcing role membership.
     Usage: `Depends(require_roles(UserRole.PRINCIPAL, UserRole.HOD))`
+    or `Depends(require_role([UserRole.PRINCIPAL, UserRole.HOD]))`
     Authorization is enforced in the backend — frontend routing is secondary.
     """
+    flattened_roles: list[UserRole] = []
+    for r in roles:
+        if isinstance(r, (list, tuple, set)):
+            flattened_roles.extend(r)
+        else:
+            flattened_roles.append(r)
+
     def _role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role not in roles:
+        if current_user.role not in flattened_roles:
             logger.warning(
                 f"Authorization denied: user {current_user.id} (role={current_user.role}) "
-                f"attempted to access resource requiring {roles}"
+                f"attempted to access resource requiring {flattened_roles}"
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -75,3 +83,7 @@ def require_roles(*roles: UserRole) -> Callable:
             )
         return current_user
     return _role_checker
+
+
+require_role = require_roles
+

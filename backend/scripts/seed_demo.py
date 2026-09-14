@@ -20,7 +20,7 @@ import random
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.database import engine, SessionLocal, Base
-from app.security.jwt import get_password_hash
+from app.security.password import hash_password
 from app.models.user import User, UserRole
 from app.models.org import Department, Program, Batch, Section, Course, Subject
 from app.models.people import Student, Faculty
@@ -43,7 +43,7 @@ def run_seed():
             db.commit()
 
         print("Seeding Users...")
-        hashed_password = get_password_hash("Password123!")
+        hashed_password = hash_password("Password123!")
 
         # 1. System Users
         principal_user = User(

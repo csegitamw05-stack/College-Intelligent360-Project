@@ -1,8 +1,5 @@
 @echo off
-cd /d "%~dp0\frontend"
-echo Installing Node modules just in case...
-call npm install
-echo.
-echo Starting the Frontend Server...
-call npm run dev
+cd /d "%~dp0frontend"
+echo Starting Frontend on http://localhost:3000 ...
+call npx next dev -p 3000
 pause

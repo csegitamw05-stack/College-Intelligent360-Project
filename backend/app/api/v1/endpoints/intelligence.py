@@ -120,6 +120,7 @@ def get_ml_model_info():
     return {"model_active": True, "metadata": meta}
 
 
+@router.get("/recalculate-risk/{student_id}", summary="Get Early Warning Risk Score for a Student")
 @router.post("/recalculate-risk/{student_id}", summary="Recalculate Early Warning Risk Score for a Student")
 def recalculate_risk(student_id: int, db: Session = Depends(get_db)):
     """Triggers real-time intelligence calculation for a specific student."""

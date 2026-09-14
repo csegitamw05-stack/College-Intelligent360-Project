@@ -1,4 +1,12 @@
-export type UserRole = 'PRINCIPAL' | 'HOD' | 'INCHARGE';
+export const UserRole = {
+  PRINCIPAL: 'PRINCIPAL' as const,
+  HOD: 'HOD' as const,
+  INCHARGE: 'INCHARGE' as const,
+  SYSTEM_ADMIN: 'SYSTEM_ADMIN' as const,
+  ADMIN: 'ADMIN' as const,
+};
+
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export interface AuthUser {
   id: number;
