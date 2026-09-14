@@ -90,16 +90,33 @@ def create_application() -> FastAPI:
                 "traceback": traceback.format_exc()
             }
 
-    # Auto-seed database on startup if empty
+    # Auto-seed database on startup if empty & ensure all columns exist
     @app.on_event("startup")
     def startup_db_seed():
         try:
             from app.core.database import SessionLocal, engine, Base
             from app.models.user import User
             from scripts.seed_demo import run_seed
+            from sqlalchemy import text
             
             # Ensure tables exist first
             Base.metadata.create_all(bind=engine)
+
+            # Auto-migrate schema: ensure is_deleted column exists on all tables
+            tables = [
+                "users", "departments", "sections", "subjects", "faculty", "students",
+                "attendance", "academic_performance", "assessments", "assignments",
+                "labs", "lab_performance", "student_engagement", "faculty_activities",
+                "events", "placements", "research", "risk_scores", "prediction_results",
+                "recommendations", "uploaded_files", "notifications"
+            ]
+            with engine.connect() as conn:
+                for t in tables:
+                    try:
+                        conn.execute(text(f"ALTER TABLE {t} ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE;"))
+                    except Exception:
+                        pass
+                conn.commit()
             
             db = SessionLocal()
             if db.query(User).count() == 0:

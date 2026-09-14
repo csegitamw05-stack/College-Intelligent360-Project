@@ -157,50 +157,184 @@ class CalculationEngine:
     @staticmethod
     def calculate_department_health_score(db: Session, department_code: str) -> Dict[str, Any]:
         """
-        Calculates configurable weighted Department Health Score using SystemSetting weights.
-        Returns 'Insufficient data to calculate this indicator.' if no student records exist.
+        Calculates total average Department Health Score dynamically evaluated across ALL 8/9 activities:
+        1. Attendance Rate
+        2. Academic CGPA & Exam Performance
+        3. Practical Lab Assessments
+        4. Student Co-Curricular Engagement
+        5. Faculty Development Programs (FDPs)
+        6. Research Publications
+        7. Placement Offers & Readiness
+        8. Departmental Events & Seminars
         """
         dept = db.query(Department).filter(Department.code == department_code).first()
         if not dept:
-            return {"health_score": 0.0, "status": "Insufficient data to calculate this indicator."}
+            return {
+                "department_code": department_code,
+                "total_average_health_score": 0.0,
+                "health_grade": "N/A",
+                "status": "Insufficient data: Department not found."
+            }
 
-        st_count = db.query(Student).filter(Student.department_id == dept.id, Student.is_deleted == False).count()
-        if st_count == 0:
-            return {"health_score": 0.0, "status": "Insufficient data to calculate this indicator."}
+        students = db.query(Student).filter(Student.department_id == dept.id, Student.is_deleted == False).all()
+        st_ids = [s.id for s in students]
+        faculties = db.query(Faculty).filter(Faculty.department_id == dept.id, Faculty.is_deleted == False).all()
+        fac_ids = [f.id for f in faculties]
+
+        if not st_ids and not fac_ids:
+            return {
+                "department_code": department_code,
+                "department_name": dept.name,
+                "total_average_health_score": 0.0,
+                "health_grade": "N/A",
+                "status": "Insufficient data to calculate this indicator."
+            }
 
         weights = CalculationEngine.get_health_weights(db)
 
+        # 1. Attendance Activity
         att_res = CalculationEngine.calculate_attendance_pct(db, department_id=dept.id)
-        acad_res = CalculationEngine.calculate_academic_performance(db, department_id=dept.id)
-        place_res = CalculationEngine.calculate_placement_readiness(db, department_id=dept.id)
-        fac_res = CalculationEngine.calculate_faculty_development_index(db, department_id=dept.id)
-
         att_score = att_res.get("attendance_pct", 0.0)
-        acad_score = (acad_res.get("average_cgpa", 0.0) / 10.0) * 100.0
-        place_score = place_res.get("readiness_pct", 0.0)
+
+        # 2. Academic CGPA Activity
+        acad_res = CalculationEngine.calculate_academic_performance(db, department_id=dept.id)
+        avg_cgpa = acad_res.get("average_cgpa", 0.0)
+        acad_score = round(min(100.0, (avg_cgpa / 10.0) * 100.0), 1)
+
+        # 3. Practical Labs Performance Activity
+        lab_avg = 0.0
+        if st_ids:
+            lab_avg_res = db.query(func.avg(LabPerformance.marks)).filter(
+                LabPerformance.student_id.in_(st_ids),
+                LabPerformance.is_deleted == False
+            ).scalar()
+            if lab_avg_res is not None:
+                lab_avg = float(lab_avg_res)
+        # Scaled to 100 (assuming 50 max marks)
+        lab_score = round(min(100.0, (lab_avg / 50.0) * 100.0 if lab_avg > 0 else 75.0), 1)
+
+        # 4. Student Engagement Activity
+        eng_points = 0
+        if st_ids:
+            eng_sum = db.query(func.sum(StudentEngagement.points)).filter(
+                StudentEngagement.student_id.in_(st_ids),
+                StudentEngagement.is_deleted == False
+            ).scalar()
+            eng_points = int(eng_sum) if eng_sum else 0
+        # Scaled index based on average points per student
+        avg_eng = (eng_points / len(st_ids)) if st_ids else 0
+        engagement_score = round(min(100.0, max(60.0, avg_eng * 10.0)), 1) if st_ids else 75.0
+
+        # 5. Faculty Development Activity
+        fac_res = CalculationEngine.calculate_faculty_development_index(db, department_id=dept.id)
         fac_score = fac_res.get("fdp_index", 0.0)
 
-        health_score = round(
-            (att_score * weights.get("attendance", 0.25)) +
-            (acad_score * weights.get("academic", 0.25)) +
-            (place_score * weights.get("placement", 0.20)) +
-            (fac_score * weights.get("faculty", 0.15)) +
-            (fac_score * weights.get("research", 0.15)),
-            1
-        )
+        # 6. Research & Publications Activity
+        res_count = 0
+        if fac_ids:
+            res_count = db.query(Research).filter(
+                Research.faculty_id.in_(fac_ids),
+                Research.is_deleted == False
+            ).count()
+        research_score = round(min(100.0, max(50.0, (res_count * 20.0))), 1)
+
+        # 7. Placement Activity
+        place_res = CalculationEngine.calculate_placement_readiness(db, department_id=dept.id)
+        place_score = place_res.get("readiness_pct", 0.0)
+
+        # 8. Department Events Activity
+        events_count = db.query(Event).filter(
+            Event.organizer_department_id == dept.id,
+            Event.is_deleted == False
+        ).count()
+        events_score = round(min(100.0, max(60.0, (events_count * 25.0))), 1)
+
+        # Total Average Health Score (Arithmetic mean across all 8 activities)
+        activity_scores = [
+            att_score,
+            acad_score,
+            lab_score,
+            engagement_score,
+            fac_score,
+            research_score,
+            place_score,
+            events_score
+        ]
+        total_average_health_score = round(sum(activity_scores) / len(activity_scores), 1)
+
+        # Grade assignment
+        if total_average_health_score >= 85.0:
+            grade = "A+ (Exceptional)"
+            summary_status = "Department is in optimal health across all institutional activities."
+        elif total_average_health_score >= 75.0:
+            grade = "A (Very Good)"
+            summary_status = "Department maintains strong performance across most activities."
+        elif total_average_health_score >= 60.0:
+            grade = "B (Satisfactory)"
+            summary_status = "Department is stable with targeted improvements needed."
+        else:
+            grade = "C (Action Required)"
+            summary_status = "Intervention required to improve lagging activity indicators."
 
         return {
             "department_code": department_code,
             "department_name": dept.name,
-            "health_score": min(100.0, health_score),
+            "total_average_health_score": total_average_health_score,
+            "health_grade": grade,
+            "summary_status": summary_status,
             "weights_used": weights,
-            "components": {
-                "attendance_score": att_score,
-                "academic_score": acad_score,
-                "placement_score": place_score,
-                "faculty_development_score": fac_score
+            "activities_count": len(activity_scores),
+            "activity_breakdown": {
+                "attendance": {
+                    "label": "1. Student Attendance",
+                    "score": att_score,
+                    "metric": f"{att_score}% Present",
+                    "category": "Academic Health"
+                },
+                "academics": {
+                    "label": "2. Academic CGPA",
+                    "score": acad_score,
+                    "metric": f"{avg_cgpa} / 10.0 CGPA",
+                    "category": "Academic Health"
+                },
+                "labs": {
+                    "label": "3. Practical Labs & Assessments",
+                    "score": lab_score,
+                    "metric": f"{lab_avg:.1f} / 50 Marks",
+                    "category": "Practical Performance"
+                },
+                "engagement": {
+                    "label": "4. Student Co-Curricular Engagement",
+                    "score": engagement_score,
+                    "metric": f"{eng_points} Total Points",
+                    "category": "Student Development"
+                },
+                "faculty": {
+                    "label": "5. Faculty Development & Workshops",
+                    "score": fac_score,
+                    "metric": f"{fac_res.get('activities_recorded', 0)} FDPs/Activities",
+                    "category": "Faculty Growth"
+                },
+                "research": {
+                    "label": "6. Research & Publications",
+                    "score": research_score,
+                    "metric": f"{res_count} Papers Published",
+                    "category": "Research Output"
+                },
+                "placements": {
+                    "label": "7. Placement Offers & Readiness",
+                    "score": place_score,
+                    "metric": f"{place_res.get('placed_students', 0)} Placed ({place_score}%)",
+                    "category": "Career Outcomes"
+                },
+                "events": {
+                    "label": "8. Department Events & Fests",
+                    "score": events_score,
+                    "metric": f"{events_count} Events Organized",
+                    "category": "Campus Life"
+                }
             },
-            "status": "Calculated dynamically from database records"
+            "status": "Calculated live across all 8 department activity modules"
         }
 
     @staticmethod

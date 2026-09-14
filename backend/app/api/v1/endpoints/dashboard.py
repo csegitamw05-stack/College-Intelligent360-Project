@@ -11,6 +11,7 @@ from app.security.dependencies import require_roles
 from app.models.user import User, UserRole
 from app.schemas.auth import UserProfile
 from app.analytics.intelligence_engine import IntelligenceEngine
+from app.analytics.calculation_engine import CalculationEngine
 from app.models.people import Student, Faculty
 from app.models.org import Department
 from app.models.intelligence import RiskScore
@@ -34,25 +35,36 @@ def principal_dashboard(
     """
     digital_twin = IntelligenceEngine.get_digital_twin_overview(db)
     
-    # Departmental comparison
+    # Departmental comparison with total average health score across all activities
     departments = ["CSE", "ECE", "ME", "IT"]
     dept_stats = []
+    total_scores = []
     for d_code in departments:
         d_twin = IntelligenceEngine.get_digital_twin_overview(db, department_code=d_code)
+        d_health = CalculationEngine.calculate_department_health_score(db, department_code=d_code)
+        score = d_health.get("total_average_health_score", 0.0)
+        total_scores.append(score)
         dept_stats.append({
             "department": d_code,
+            "department_name": d_health.get("department_name", d_code),
             "students": d_twin["total_students"],
             "attendance": d_twin["average_attendance"],
             "cgpa": d_twin["average_cgpa"],
             "at_risk": d_twin["high_risk_students"] + d_twin["medium_risk_students"],
-            "health_index": d_twin["institutional_health_index"]
+            "health_index": d_twin["institutional_health_index"],
+            "total_average_health_score": score,
+            "health_grade": d_health.get("health_grade", "N/A"),
+            "activity_breakdown": d_health.get("activity_breakdown", {})
         })
+
+    institutional_avg_health = round(sum(total_scores) / len(total_scores), 1) if total_scores else 0.0
 
     return {
         "dashboard": "principal",
         "user": UserProfile.model_validate(current_user).model_dump(),
         "access_scope": "institution_wide",
         "digital_twin": digital_twin,
+        "institutional_average_health_score": institutional_avg_health,
         "department_comparison": dept_stats,
         "modules_available": [
             "attendance", "academic_performance", "assessments",
@@ -106,17 +118,22 @@ def hod_dashboard(
             "factors": rs.factors
         })
 
+    # Department health score across all 8 activities
+    dept_health = CalculationEngine.calculate_department_health_score(db, dept_code)
+
     return {
         "dashboard": "hod",
         "user": UserProfile.model_validate(current_user).model_dump(),
         "access_scope": "department",
         "department": dept_code,
         "digital_twin": digital_twin,
+        "department_health_score": dept_health,
         "faculty_members": fac_list,
         "at_risk_students": risk_list,
         "modules_available": [
             "attendance", "academic_performance", "assessments",
-            "student_engagement", "faculty_activities", "labs"
+            "student_engagement", "faculty_activities", "labs",
+            "events", "placements", "research"
         ],
         "message": f"HOD dashboard initialized for {dept_code} department.",
     }
@@ -134,8 +151,9 @@ def incharge_dashboard(
     """Module-scoped access — INCHARGE only."""
     dept_code = current_user.department or "CSE"
     digital_twin = IntelligenceEngine.get_digital_twin_overview(db, department_code=dept_code)
+    dept_health = CalculationEngine.calculate_department_health_score(db, dept_code)
 
-    recent_attendance = db.query(Attendance).order_by(Attendance.date.desc()).limit(10).all()
+    recent_attendance = db.query(Attendance).filter(Attendance.is_deleted == False).order_by(Attendance.date.desc()).limit(10).all()
     att_logs = []
     for a in recent_attendance:
         att_logs.append({
@@ -152,6 +170,7 @@ def incharge_dashboard(
         "access_scope": "assigned_module",
         "department": dept_code,
         "digital_twin": digital_twin,
+        "department_health_score": dept_health,
         "recent_attendance_logs": att_logs,
         "message": f"Incharge dashboard initialized for {dept_code}.",
     }

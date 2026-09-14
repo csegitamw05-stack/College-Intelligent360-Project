@@ -32,7 +32,9 @@
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "C:\\Users\\nasim\\AppData\\Local\\Temp\\campus-intel-360-build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

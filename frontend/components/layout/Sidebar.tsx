@@ -22,10 +22,12 @@ import {
   FileSpreadsheet,
   ShieldCheck,
   Settings,
-  Users
+  Users,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/types/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   userRole?: UserRole;
@@ -33,6 +35,7 @@ interface SidebarProps {
 
 export function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const primaryItems = [
     { name: 'System Connectivity', href: '/', icon: Activity },
@@ -122,14 +125,35 @@ export function Sidebar({ userRole }: SidebarProps) {
         </div>
       </div>
 
-      <div className="p-3 border-t border-slate-800">
-        <div className="rounded-lg bg-slate-800/80 p-2.5 text-xs border border-slate-700/50">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-semibold mb-1">
-            <ShieldAlert className="h-3.5 w-3.5 text-emerald-400" />
-            <span className="text-[11px]">Zero Mock Data Enforced</span>
+      <div className="p-3 border-t border-slate-800 space-y-3">
+        {user && (
+          <div className="rounded-lg bg-slate-800/90 p-2.5 border border-slate-700/60">
+            <div className="flex items-center justify-between mb-2">
+              <div className="truncate">
+                <p className="text-xs font-bold text-white truncate">{user.full_name}</p>
+                <p className="text-[10px] text-blue-400 font-mono">{user.email}</p>
+              </div>
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold uppercase">
+                {user.role}
+              </span>
+            </div>
+            <button
+              onClick={() => logout()}
+              className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md bg-rose-600/20 text-rose-300 hover:bg-rose-600 hover:text-white border border-rose-500/30 transition-all"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
           </div>
-          <p className="text-slate-400 text-[10px] leading-tight">
-            Telemetry calculated live via SQL & Python Analytics engine.
+        )}
+
+        <div className="rounded-lg bg-slate-800/50 p-2 text-xs border border-slate-700/30">
+          <div className="flex items-center gap-1.5 text-emerald-400 font-semibold mb-0.5">
+            <ShieldAlert className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="text-[10px]">Zero Mock Data Enforced</span>
+          </div>
+          <p className="text-slate-400 text-[9px] leading-tight">
+            Telemetry calculated live via SQL & Analytics engine.
           </p>
         </div>
       </div>

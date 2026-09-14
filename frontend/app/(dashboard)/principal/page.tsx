@@ -160,31 +160,49 @@ export default function PrincipalDashboard() {
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-100 text-slate-700 uppercase text-xs font-semibold">
+                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase text-xs font-semibold">
                   <tr>
                     <th className="p-3 rounded-l-lg">Department</th>
                     <th className="p-3">Students</th>
                     <th className="p-3">Avg Attendance</th>
                     <th className="p-3">Avg CGPA</th>
                     <th className="p-3">At-Risk</th>
-                    <th className="p-3 rounded-r-lg">Health Index</th>
+                    <th className="p-3 rounded-r-lg">Total Avg Health Score (All Activities)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {depts.map((dept: any) => (
-                    <tr key={dept.department} className="hover:bg-slate-50 transition-colors">
-                      <td className="p-3 font-bold text-slate-900">{dept.department}</td>
-                      <td className="p-3 text-slate-600">{dept.students}</td>
-                      <td className="p-3 font-semibold text-emerald-700">{dept.attendance}%</td>
-                      <td className="p-3 font-semibold text-blue-700">{dept.cgpa}</td>
-                      <td className="p-3">
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold ${dept.at_risk > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {dept.at_risk}
-                        </span>
-                      </td>
-                      <td className="p-3 font-bold text-slate-800">{dept.health_index} / 100</td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {depts.map((dept: any) => {
+                    const totalScore = dept.total_average_health_score ?? dept.health_index ?? 0;
+                    const grade = dept.health_grade || (totalScore >= 80 ? 'A+' : 'A');
+                    return (
+                      <tr key={dept.department} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="p-3 font-bold text-slate-900 dark:text-white">
+                          {dept.department}
+                          {dept.department_name && dept.department_name !== dept.department && (
+                            <span className="block text-[10px] text-slate-400 font-normal">{dept.department_name}</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-slate-600 dark:text-slate-300">{dept.students}</td>
+                        <td className="p-3 font-semibold text-emerald-600 dark:text-emerald-400">{dept.attendance}%</td>
+                        <td className="p-3 font-semibold text-blue-600 dark:text-blue-400">{dept.cgpa}</td>
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded text-xs font-bold ${dept.at_risk > 0 ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'}`}>
+                            {dept.at_risk}
+                          </span>
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-sm text-indigo-700 dark:text-indigo-400 font-mono">
+                              {totalScore}%
+                            </span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300">
+                              {grade}
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -201,9 +219,13 @@ export default function PrincipalDashboard() {
           <CardContent className="space-y-6">
             <div className="text-center py-4">
               <div className="inline-flex items-center justify-center h-28 w-28 rounded-full border-4 border-emerald-400 bg-slate-800/80 shadow-2xl">
-                <span className="text-4xl font-extrabold text-emerald-400">{dt.institutional_health_index || 0}</span>
+                <span className="text-4xl font-extrabold text-emerald-400">
+                  {data?.institutional_average_health_score || dt.institutional_health_index || 0}%
+                </span>
               </div>
-              <p className="text-xs text-slate-300 font-medium mt-3 uppercase tracking-wider">Overall Campus Health Index</p>
+              <p className="text-xs text-slate-300 font-medium mt-3 uppercase tracking-wider">
+                Overall Campus Average Health Score (All Activities)
+              </p>
             </div>
 
             <div className="space-y-3 pt-2 text-xs border-t border-slate-800">

@@ -16,7 +16,8 @@ class SoftDeleteMixin(object):
     """
     Mixin for soft deletion support.
     """
-    from sqlalchemy import String, ForeignKey
+    from sqlalchemy import String, ForeignKey, Boolean
+    is_deleted = Column(Boolean, default=False, nullable=False, index=True)
     deleted_at = Column(DateTime, nullable=True, index=True)
     deleted_by = Column(Integer, ForeignKey('users.id', ondelete="SET NULL"), nullable=True)
     deletion_reason = Column(String(255), nullable=True)
