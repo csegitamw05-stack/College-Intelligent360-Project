@@ -50,3 +50,5 @@ yarn-error.log*
 .idea/
 *.swp
 .DS_Store
+powershell.bat
+powershell.cmd

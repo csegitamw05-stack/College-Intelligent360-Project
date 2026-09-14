@@ -12,7 +12,7 @@ class Faculty(Base, BaseModelMixin, SoftDeleteMixin):
     department_id = Column(Integer, ForeignKey("departments.id", ondelete="CASCADE"), nullable=False)
     designation = Column(String(100), nullable=True)
     
-    user = relationship("User")
+    user = relationship("User", foreign_keys=[user_id])
     department = relationship("Department")
 
 
